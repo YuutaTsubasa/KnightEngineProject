@@ -1,4 +1,6 @@
-using KnightEngine.Utils;
+using KnightEngine.OpenTK;
+using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL.Compatibility;
 
 namespace KnightEngine;
 using SDL3;
@@ -13,8 +15,8 @@ public class KnightEngine
         if (!SDL3.SDL_Init(SDL_InitFlags.Video))
             throw new Exception($"Initialize SDL Error. Error: {SDL3.SDL_GetError()}");
 
-        SDL3.SDL_GL_SetAttribute(SDL_GLattr.ContextMajorVersion, 3);
-        SDL3.SDL_GL_SetAttribute(SDL_GLattr.ContextMinorVersion, 3);
+        SDL3.SDL_GL_SetAttribute(SDL_GLattr.ContextMajorVersion, 2);
+        SDL3.SDL_GL_SetAttribute(SDL_GLattr.ContextMinorVersion, 1);
         SDL3.SDL_GL_SetAttribute(SDL_GLattr.ContextProfileMask, SDL_GLprofile.Core);
 
         _window = SDL3.SDL_CreateWindow(
@@ -31,6 +33,8 @@ public class KnightEngine
 
         SDL3.SDL_GL_MakeCurrent(_window, _glContext);
         SDL3.SDL_GL_SetSwapInterval(1);
+        
+        GLLoader.LoadBindings(new SDL3BindingsContext());
     }
 
     public void Run()
@@ -49,10 +53,38 @@ public class KnightEngine
                 }
             }
 
-            SDL3.SDL_GL_SwapWindow(_window);
+            _Render();
         }
     }
 
+    private void _Render()
+    {
+        GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        
+        GL.MatrixMode(MatrixMode.Projection);
+        GL.LoadIdentity();
+        GL.Ortho(0.0, 1920.0, 1080.0, 0.0, -1.0, 1.0);
+        
+        GL.MatrixMode(MatrixMode.Modelview);
+        GL.LoadIdentity();
+        
+        GL.Color3f(1.0f, 1.0f, 1.0f);
+        
+        GL.Begin(PrimitiveType.Quads);
+        GL.Vertex2f(100.0f, 100.0f);
+        GL.Vertex2f(200.0f, 100.0f);
+        GL.Vertex2f(200.0f, 200.0f);
+        GL.Vertex2f(100.0f, 200.0f);
+        GL.End();
+        
+        SDL3.SDL_GL_SwapWindow(_window);
+
+        var error = GL.GetError();
+        if (error != ErrorCode.NoError)
+            Console.WriteLine($"Error: {error}");
+    }
+    
     public void Shutdown()
     {
         SDL3.SDL_GL_DestroyContext(_glContext);
