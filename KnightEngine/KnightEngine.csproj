@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>KnightEngine</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Alimer.Bindings.SDL" Version="3.9.2" />
+      <PackageReference Include="OneOf" Version="3.0.271" />
+      <PackageReference Include="OpenTK" Version="5.0.0-pre.12" />
+    </ItemGroup>
+
+</Project>
