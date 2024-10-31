@@ -11,25 +11,29 @@
 
     <ItemGroup>
       <PackageReference Include="Alimer.Bindings.SDL" Version="3.9.2" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
       <PackageReference Include="OneOf" Version="3.0.271" />
       <PackageReference Include="OpenTK" Version="5.0.0-pre.12" />
       <PackageReference Include="StbImageSharp" Version="2.30.15" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="Shaders\default_fragment_shader.glsl">
+      <None Update="Resources\Shaders\default_fragment_shader.glsl">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Resources\Shaders\default_vertex_shader.glsl">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="Shaders\default_vertex_shader.glsl">
+      <None Update="Resources\Images\background.jpeg">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="Images\background.jpeg">
+      <None Update="Resources\Models\4.0.vrm">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Images\" />
+      <Folder Include="Resources\Models\" />
     </ItemGroup>
 
 </Project>

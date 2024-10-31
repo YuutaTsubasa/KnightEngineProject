@@ -1,4 +1,6 @@
+using KnightEngine.Model;
 using KnightEngine.OpenTK;
+using Newtonsoft.Json.Linq;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL.Compatibility;
 using OpenTK.Mathematics;
@@ -15,8 +17,9 @@ public class KnightEngine
     private int _vbo;
     private int _vao;
     private int _texture;
+    private VrmModel _vrmModel;
     
-    public void Initialize(string windowTitle, int windowWidth, int windowHeight)
+    public KnightEngine(string windowTitle, int windowWidth, int windowHeight)
     {
         if (!SDL3.SDL_Init(SDL_InitFlags.Video))
             throw new Exception($"Initialize SDL Error. Error: {SDL3.SDL_GetError()}");
@@ -45,8 +48,8 @@ public class KnightEngine
         GL.Enable(EnableCap.DepthTest);
 
         _LoadShaders();
-        _CreateBufferObjects();
-        _LoadTexture("Images/background.jpeg");
+        _vrmModel = VrmModel.Create("Resources/Models/4.0.vrm", _shaderProgram);
+        //_CreateBufferObjects();
     }
 
     public void Run()
@@ -74,21 +77,30 @@ public class KnightEngine
         GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         
-        GL.UseProgram(_shaderProgram);
+        GL.Uniform3f(GL.GetUniformLocation(_shaderProgram, "lightPos"), 1.2f, 1.0f, 2.0f);
+        GL.Uniform3f(GL.GetUniformLocation(_shaderProgram, "viewPos"), 0.0f, 0.8f, 3.0f);
+        GL.Uniform3f(GL.GetUniformLocation(_shaderProgram, "lightColor"), 1.0f, 1.0f, 1.0f);
+        GL.Uniform3f(GL.GetUniformLocation(_shaderProgram, "objectColor"), 0.5f, 0.5f, 1f);
+        
+        var view = Matrix4.LookAt(new Vector3(0.0f, 0.8f, 3.0f), new Vector3(0.0f, 0.8f, 0.0f), Vector3.UnitY);
+        var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45.0f), 1920f / 1080f, 0.1f, 100.0f);
 
+        int viewLoc = GL.GetUniformLocation(_shaderProgram, "view");
+        int projectionLoc = GL.GetUniformLocation(_shaderProgram, "projection");
+
+        unsafe
+        {
+            fixed (float* viewPtr = view.ToFloatArray())
+            fixed (float* projectionPtr = projection.ToFloatArray())
+            {
+                GL.UniformMatrix4fv(viewLoc, 1, false, viewPtr);
+                GL.UniformMatrix4fv(projectionLoc, 1, false, projectionPtr);
+            }
+        }
+        
         var time = SDL3.SDL_GetTicks() / 1000.0f;
-        var rotation = Matrix4.CreateRotationY(time) * Matrix4.CreateRotationX(time * 0.5f);
-        
-        int modelLoc = GL.GetUniformLocation(_shaderProgram, "model");
-        GL.UniformMatrix4f(modelLoc, 1, false, ref rotation);
-        
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2d, _texture);
-        GL.Uniform1i(GL.GetUniformLocation(_shaderProgram, "texture0"), 0);
-        
-        GL.BindVertexArray(_vao);
-        GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
-        
+        _vrmModel.Render(time);
+
         SDL3.SDL_GL_SwapWindow(_window);
 
         var error = GL.GetError();
@@ -99,7 +111,7 @@ public class KnightEngine
     private void _LoadShaders()
     {
         var vertexShader = GL.CreateShader(ShaderType.VertexShader);
-        GL.ShaderSource(vertexShader, File.ReadAllText("Shaders/default_vertex_shader.glsl"));
+        GL.ShaderSource(vertexShader, File.ReadAllText("Resources/Shaders/default_vertex_shader.glsl"));
         GL.CompileShader(vertexShader);
 
         GL.GetShaderi(vertexShader, ShaderParameterName.CompileStatus, out var vertexCompileStatus);
@@ -110,7 +122,7 @@ public class KnightEngine
         }
         
         var fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-        GL.ShaderSource(fragmentShader, File.ReadAllText("Shaders/default_fragment_shader.glsl"));
+        GL.ShaderSource(fragmentShader, File.ReadAllText("Resources/Shaders/default_fragment_shader.glsl"));
         GL.CompileShader(fragmentShader);
         
         GL.GetShaderi(fragmentShader, ShaderParameterName.CompileStatus, out var fragmentCompileStatus);
